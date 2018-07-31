@@ -48,20 +48,20 @@ Bucket names must be set in these variables.
 
 ## Config file
 
-##Remote http Repository (Source)##
-RCLONE_CONFIG_SOURCEREMOTE_TYPE=http
-RCLONE_CONFIG_SOURCEREMOTE_URL=https://my_repo.my_project.org/
-SOURCEPATH=
+##Remote http Repository (Source)##   
+RCLONE_CONFIG_SOURCEREMOTE_TYPE=http    
+RCLONE_CONFIG_SOURCEREMOTE_URL=https://my_repo.my_project.org/   
+SOURCEPATH=   
 
-##Remote S3 Bucket (Destination)##
-RCLONE_CONFIG_DESTREMOTE_TYPE=s3
-RCLONE_CONFIG_DESTREMOTE_PROVIDER=Other
-RCLONE_CONFIG_DESTREMOTE_ACCESS_KEY_ID=XXX
-RCLONE_CONFIG_DESTREMOTE_SECRET_ACCESS_KEY=XXX
-RCLONE_CONFIG_DESTREMOTE_REGION=sa-east-1
-RCLONE_CONFIG_DESTREMOTE_ENDPOINT=s3.my-provider.org
-RCLONE_CONFIG_DESTREMOTE_ACL=private
-DESTPATH=MyBucket
+##Remote S3 Bucket (Destination)##   
+RCLONE_CONFIG_DESTREMOTE_TYPE=s3   
+RCLONE_CONFIG_DESTREMOTE_PROVIDER=Other   
+RCLONE_CONFIG_DESTREMOTE_ACCESS_KEY_ID=XXX   
+RCLONE_CONFIG_DESTREMOTE_SECRET_ACCESS_KEY=XXX   
+RCLONE_CONFIG_DESTREMOTE_REGION=sa-east-1   
+RCLONE_CONFIG_DESTREMOTE_ENDPOINT=s3.my-provider.org   
+RCLONE_CONFIG_DESTREMOTE_ACL=private   
+DESTPATH=MyBucket   
 
-# Reference
-* **rclone**: <https://rclone.org/>
+# Reference   
+* **rclone**: <https://rclone.org/>   
