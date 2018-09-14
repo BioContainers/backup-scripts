@@ -32,8 +32,8 @@ RUN mkdir /convertdir
 VOLUME /convertdir
 
 ###The 3 need environment variables
-ENV PLUGIN_REPO= \
-	PLUGIN_TAG= \
+ENV IMAGE_REPO= \
+	IMAGE_TAG= \
 	SOFTWARE_NAME=
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

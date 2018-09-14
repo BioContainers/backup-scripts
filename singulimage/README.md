@@ -5,8 +5,8 @@ Transforms a given _Docker_ image into a _Singularity_ one.
 # Setup required: env variables    
   
 Some environment variables must be set so the conversion script knows which image to transform and how to call the output:
- * $PLUGIN_REPO is the docker repository name
- * $PLUGIN_TAG is the image's tag
+ * $IMAGE_REPO is the image's repository name
+ * $IMAGE_TAG is the image's tag
  * $SOFTWARE_NAME is the name given to the image's software
 
 ## Command-line    
@@ -18,7 +18,7 @@ Some environment variables must be set so the conversion script knows which imag
 To use your .env file simply add it to the command line this way:    
 ```docker run --env-file config.env ...```    
 You can also set them at runtime without using the _-e_ flag:      
-```docker run -e "PLUGIN_TAG=jessie" -e "PLUGIN_REPO=debian"```
+```docker run -e "IMAGE_TAG=jessie" -e "IMAGE_REPO=debian"```
 
 ### Saving data    
 
@@ -31,8 +31,8 @@ This is shown below in the example using the _-v_ argument:
 ## Environment file (ie: _demo.env_)      
 
 ```
-PLUGIN_REPO=debian    
-PLUGIN_TAG=jessie     
+IMAGE_REPO=debian    
+IMAGE_TAG=jessie     
 SOFTWARE_NAME=debian-jessie     
 ```   
  
