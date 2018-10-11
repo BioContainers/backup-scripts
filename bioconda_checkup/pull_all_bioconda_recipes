@@ -1,0 +1,6 @@
+#!/bin/bash
+
+######Parsing
+
+wget -O allRecipes.html https://bioconda.github.io/recipes.html
+
