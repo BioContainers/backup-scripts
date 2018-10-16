@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 from packaging import version
 from collections import defaultdict
 import argparse
+import wget
+import sys
+import os
 
 ######################
 ###Sorting versions###
@@ -20,44 +23,51 @@ def order_version_list (versionList):
 ###Not classified yet###
 ########################
 
-def is_reference_outdated (refVersion, targetList) :
+def is_reference_outdated (softwareName, refVersion, targetList, output) :
 	#print ("Comparing "+refVersion+" and "+ " ".join(targetList))
 	idx=0
+	targetList = order_version_list(targetList)
 	while idx < len(targetList):
 		if version.parse(refVersion) < version.parse(targetList[idx]) :
 			break
 		idx += 1
 	if idx != len(targetList) :
-		print("Tool's version is behind")
-		print(targetList[idx:])
+		print(softwareName+"'s top version "+refVersion+" is outdated by these versions:", file=output)
+		print(targetList[idx:], file=output)
 
 #################
 ###Main method###
 #################
 
-parser = argparse.ArgumentParser(description="Looks for higher version number of input tool in allRecipes.html")
-parser.add_argument('software')
-parser.add_argument('-v', nargs='*')
-parser.add_argument('-f', action="store_true")
+parser = argparse.ArgumentParser(description="Tests whether a given set of softwares have more up-to-date recipes in BioConda")
+parser.add_argument('software', help="Either a single software name or a file containing software names and versions")
+parser.add_argument('-v','--versions', nargs='*', help="If testing a single software, a series of versions separated by blank spaces")
+parser.add_argument('-f','--use-file', action="store_true", help="If used, the script will expect a file containing one software name and one or more version numbers per line as input")
+parser.add_argument('-u','--url',default="https://bioconda.github.io/recipes.html", help="The url where the html table to parse can be found")
+parser.add_argument('-o','--output', help="Output file where the results are stored, defaults to stdout")
 args = parser.parse_args()
 
-html_doc = open ("allRecipes.html","r")
+##Downloading the recipes
+in_file=wget.download (url=args.url)
 
-bioconda_recipes = defaultdict(list)
+##Opening it
+html_doc = open (in_file,"r")
 
 ##Getting all BioConda's recipes
-
+#Parsing the html doc
 recipes = BeautifulSoup(html_doc, features="html.parser")
+#Initialising the list to contain dicts by default
+bioconda_recipes = defaultdict(list)
 for row in recipes.find_all('tr'):
 	crtTool=row.get_text(" ").split(" ")
 	crtSoft=crtTool[0]
 	crtVersion=crtTool[1]
 	bioconda_recipes[crtSoft].append(crtVersion)
+html_doc.close()
 
 ##Getting software names to compare
-
 ref_soft = defaultdict(list)
-if (args.f):
+if (args.use_file):
 	print ("Using a file as reference")
 	ref_file = open( args.software, "r")
 	line=ref_file.readline()
@@ -69,28 +79,29 @@ if (args.f):
 		#print (crt_version)
 		ref_soft[crt_soft]=crt_version
 		line=ref_file.readline()
+	ref_file.close()
 else:
 	print ("Using input as reference")
 	ref_soft[args.software]=args.v
 
-#print (bioconda_recipes)
-#print (ref_soft)
-
 ##And now to compare reference and BioConda
+if args.output is not None:
+	output = open (args.output, "w")
+else:
+	output = sys.stdout
+
 for crt_ref in ref_soft.keys():
 	crt_ref_versions=order_version_list(ref_soft[crt_ref])
 	crt_biocond=bioconda_recipes[crt_ref]
 	print ("Testing "+crt_ref)
 	if len(crt_biocond)!=0 :
-		is_reference_outdated (crt_ref_versions[-1], bioconda_recipes[crt_ref])
+		is_reference_outdated (crt_ref, crt_ref_versions[-1], bioconda_recipes[crt_ref], output)
 
 
+if output is not sys.stdout:
+	output.close()
 
-#testVersion=["1.2.10","1.12.1","2","2.13"]
-#sortedVersions=order_version_list(testVersion)
-#print (vars(args)['v'])
-#sortedVersions=order_version_list(vars(args)['v'])
-#print (sortedVersions)
-#print (version.parse("1.2.10")<version.parse("1.12.1"))
 
-#print(len(bioconda_recipes.keys()))
+##Cleanup
+#The downloaded file needs to be removed
+os.remove(in_file)
