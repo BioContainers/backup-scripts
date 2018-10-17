@@ -3,6 +3,7 @@
 from bs4 import BeautifulSoup
 from packaging import version
 from collections import defaultdict
+import difflib
 import argparse
 import wget
 import sys
@@ -23,7 +24,7 @@ def order_version_list (versionList):
 ###Not classified yet###
 ########################
 
-def is_reference_outdated (softwareName, refVersion, targetList, output) :
+def is_reference_outdated (softwareName, refVersion, targetName, targetList, output) :
 	#print ("Comparing "+refVersion+" and "+ " ".join(targetList))
 	idx=0
 	targetList = order_version_list(targetList)
@@ -32,8 +33,10 @@ def is_reference_outdated (softwareName, refVersion, targetList, output) :
 			break
 		idx += 1
 	if idx != len(targetList) :
-		print(softwareName+"'s top version "+refVersion+" is outdated by these versions:", file=output)
+		print(softwareName+"'s top version "+refVersion+" is outdated by "+targetName+"'s versions:", file=output)
 		print(targetList[idx:], file=output)
+	else:
+		print(softwareName+" is up-to-date compared to "+targetName, file=output)
 
 #################
 ###Main method###
@@ -92,10 +95,11 @@ else:
 
 for crt_ref in ref_soft.keys():
 	crt_ref_versions=order_version_list(ref_soft[crt_ref])
-	crt_biocond=bioconda_recipes[crt_ref]
-	print ("Testing "+crt_ref)
-	if len(crt_biocond)!=0 :
-		is_reference_outdated (crt_ref, crt_ref_versions[-1], bioconda_recipes[crt_ref], output)
+	#Let's find the best suitable tool in BioConda
+	best_match = difflib.get_close_matches(crt_ref, bioconda_recipes.keys(), n=1, cutoff=0.8)
+	if len(best_match)!=0:
+		print ("--->"+crt_ref+"<--- was found to be similar to --->"+best_match[0]+"<---")
+		is_reference_outdated (crt_ref, crt_ref_versions[-1], best_match[0], bioconda_recipes[best_match[0]], output)
 
 
 if output is not sys.stdout:
