@@ -33,10 +33,11 @@ def is_reference_outdated (softwareName, refVersion, targetName, targetList, out
 			break
 		idx += 1
 	if idx != len(targetList) :
-		print(softwareName+"'s top version "+refVersion+" is outdated by "+targetName+"'s versions:", file=output)
-		print(targetList[idx:], file=output)
-	else:
-		print(softwareName+" is up-to-date compared to "+targetName, file=output)
+		#print(softwareName+"'s top version "+refVersion+" is outdated by "+targetName+"'s versions:", file=output)
+		#print(targetList[idx:], file=output)
+		print(softwareName+" ("+refVersion+") BEHIND "+targetName+" versions: "+" ".join(targetList[idx:]), file=output)
+	#else:
+		#print(softwareName+" is up-to-date compared to "+targetName, file=output)
 
 #################
 ###Main method###
