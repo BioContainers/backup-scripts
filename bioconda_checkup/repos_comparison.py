@@ -103,6 +103,8 @@ def is_reference_outdated (softwareName, refVersion, targetName, targetList, out
 		#print(softwareName+"'s top version "+refVersion+" is outdated by "+targetName+"'s versions:", file=output)
 		#print(targetList[idx:], file=output)
 		print(softwareName+" ("+refVersion+") BEHIND "+targetName+" versions: "+" ".join(targetList[idx:]), file=output)
+		return True
+	return False
 	#else:
 		#print(softwareName+" is up-to-date compared to "+targetName, file=output)
 
@@ -128,14 +130,22 @@ if args.output is not None:
 else:
 	output = sys.stdout
 
+similar_tools_ctr=0
+behind_tools_ctr=0
+
+print ("\nComparing both tools lists")
 for crt_biocont_tool in biocont_tools.keys():
 	crt_biocont_versions=order_version_list(biocont_tools[crt_biocont_tool])
 	#Let's find the best suitable tool in BioConda
 	best_match = difflib.get_close_matches(crt_biocont_tool, bioconda_tools.keys(), n=1, cutoff=0.8)
 	if len(best_match)!=0:
-		print ("\t--->"+crt_biocont_tool+"<--- was found to be similar to --->"+best_match[0]+"<---")
-		is_reference_outdated (crt_biocont_tool, crt_biocont_versions[-1], best_match[0], bioconda_tools[best_match[0]], output)
+		similar_tools_ctr+=1
+		#print ("\t--->"+crt_biocont_tool+"<--- was found to be similar to --->"+best_match[0]+"<---")
+		if is_reference_outdated (crt_biocont_tool, crt_biocont_versions[-1], best_match[0], bioconda_tools[best_match[0]], output):
+			behind_tools_ctr+=1
 
+print ("There seems to be "+str(similar_tools_ctr)+" in common between both repos")
+print ("I found "+str(behind_tools_ctr)+" outdated tool")
 
 if output is not sys.stdout:
 	output.close()
