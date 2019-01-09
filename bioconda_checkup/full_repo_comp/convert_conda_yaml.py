@@ -12,7 +12,7 @@ client = docker.from_env()
 
 #print (client.images.list())
 volume_part = "-v "+args.input+":/data"
-result = client.containers.run("lbesoft/conda-build:latest" ##This image can't download source so rendering fails, need to find another conda image, maybe our own
-	, "conda-render -f "+args.output+" /data"
+result = client.containers.run("bioconda/bioconda-utils-build-env:latest"
+	, "conda-render -f /data/"+args.output+" /data"
 	, volumes={args.input:{'bind': '/data', 'mode': 'rw'}})
-print (result)
+#print (result)

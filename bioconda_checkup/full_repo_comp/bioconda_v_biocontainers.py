@@ -23,9 +23,31 @@ def parse_biocontainer_recipe (path):
 		return {"soft":software,"ver":version}
 
 def parse_bioconda_recipes (path):
-	with open(path, 'r') as content_file:
-		meta = yaml.safe_load(content_file)
-	print (meta)
+	print ("Treating "+path)
+	###We can't load raw meta files that easily since 
+	###conda's yaml files use a non-standard variables syntax 
+	###Therefore we must 'render' those yaml files before they can be parsed
+
+	##Step #1: rendering meta.yaml into a standard yaml file
+	pathDir = os.path.dirname(path)
+	newName = "cleanMeta.yaml"
+	cleanMeta = os.path.join(pathDir, newName)
+	os.system("./convert_conda_yaml.py -i "+pathDir+" -o "+newName)
+
+	##Step #2: parsing the yaml file for content
+	with open(cleanMeta, 'r') as content_file:
+		clean_meta = yaml.safe_load(content_file)
+	#print (clean_meta)
+	if 'package' not in clean_meta.keys():
+		print ("Missing package info in conda recipe ("+path+")")
+		return None
+	elif 'name' not in clean_meta['package'].keys() or 'version' not in clean_meta['package'].keys():
+		print ("Missing package name or version in conda recipe ("+path+")")
+		return None
+	else:
+		software = clean_meta['package']['name']
+		version = clean_meta['package']['version']
+		return {"soft":software,"ver":version}
 
 def add_tool_to_dict (tool, dict):
 	if tool is not None:
@@ -61,11 +83,13 @@ else:
 
 #ctr=0
 ##We first list all tools from BioConda
+bioconda_tools = defaultdict(list)
 for root, dirs, files in os.walk (args.bioconDa):
 	for file in files:
 		if file.endswith("meta.yaml"):
-			print ("Parsing "+os.path.join(root,file))
-			parse_bioconda_recipes(os.path.join(root,file))
+			this_tool=parse_bioconda_recipes(os.path.join(root,file))
+			bioconda_tools = add_tool_to_dict(this_tool, bioconda_tools)
+print (bioconda_tools)
 
 ##Then all tools fomr BioContainers
 biocont_tools = defaultdict(list)
