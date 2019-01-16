@@ -3,6 +3,7 @@
 from bs4 import BeautifulSoup
 from packaging import version
 from collections import defaultdict
+from collections import OrderedDict
 import difflib
 import argparse
 import wget
@@ -31,7 +32,7 @@ def clean_version_number (original_version):
 def import_comparison_list (url):
 	print ("Importing BioContainers tools list from "+url)
 	biocont_tools = defaultdict(list)
-	
+
 	r = requests.get(url)
 	#print (r.status_code)
 	tree=r.json()['tree']
@@ -104,7 +105,8 @@ if args.output is not None:
 else:
 	output = sys.stdout
 
-missing_tools_ctr=0
+#toolsList = defaultdict(list)
+toolsList = dict()
 
 print ("\nComparing both tools lists")
 for crt_reference_tool in reference_tools.keys():
@@ -114,13 +116,18 @@ for crt_reference_tool in reference_tools.keys():
 	latest_version = order_version_list(reference_tools[crt_reference_tool])[0]
 	#print ("Latest version for "+crt_reference_tool+" is "+latest_version)
 	if len(best_match)==0:
-		text = "\t--->"+crt_reference_tool+"<--- NOT found (latest version "+latest_version+")"
-		if args.output is not None:
-			text = crt_reference_tool+"\t"+latest_version
-		print (text, file=output)
-		missing_tools_ctr+=1
+		toolsList[crt_reference_tool]=latest_version
 
-print ("There seems to be "+str(missing_tools_ctr)+" tools in the reference missing from the other repo")
+sortedTools = OrderedDict(sorted(toolsList.items()))
+for key in sortedTools:
+	versions = sortedTools[key]
+	text = "\t--->"+key+"<--- NOT found (example version "+versions+")"
+	if args.output is not None:
+		text = key+"\t"+versions
+	print (text, file=output)
+
+
+print ("There seems to be "+str(len(sortedTools.keys()))+" tools in the reference missing from the other repo")
 
 if output is not sys.stdout:
 	output.close()
