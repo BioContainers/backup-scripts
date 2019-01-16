@@ -9,30 +9,17 @@ import wget
 from bs4 import BeautifulSoup
 from collections import defaultdict
 
-########################################
-###Download docker image from quay.io###
-########################################
+##########
+###Misc###
+##########
 
-def download_image_from_quayio (tool_name):
-	print ("Importing page image image from quay.io")
-	url = "https://quay.io/repository/biocontainers/"+tool_name+"?tab=tags"
-	print (url)
-	in_file=wget.download (url)
-	html_doc = open (in_file, "r")
-
-	parsed_page = BeautifulSoup(html_doc, features="html.parser")
-	print (parsed_page.prettify())
-	print ("\nLooking for versions")
-	lookfor = {
-		'span': '',
-		'bo-text': 'tag.name'
-	}
-	for row in parsed_page.find_all(**lookfor):
-	#for row in parsed_page.find_all('bo-text'='tag.name'):
-		print (row)
-
-	html_doc.close()
-	os.remove(in_file)
+def get_tags_from_response (response):
+	content = response.json()
+	res = list()
+	#print (content['tags'])
+	for tag in content['tags']:
+		res.append(tag['name'])
+	return res
 
 ###################################################
 ####################Main method####################
@@ -54,6 +41,8 @@ testCtr = 0
 with open(args.listoftools, 'r') as listfile:
 	tools = listfile.readlines()
 	#tools = sorted(tools)
+	client = docker.from_env()
+
 	for crt_line in tools:
 		testCtr += 1
 		crt_line = crt_line.rstrip().split("\t")
@@ -69,22 +58,35 @@ with open(args.listoftools, 'r') as listfile:
 			continue
 		ret = r.json()
 		for tag in ret['tags']:
-			print ("\t"+tag['name'], file=output)
+			#print ("\t"+tag['name'], file=output)
 			totalSize += tag['size']
 			#print ("Current size: "+str(totalSize))
+		crt_tags = get_tags_from_response(r)
+		print (crt_tags)
+		images = None
 
 		##Making sure it doesn't exist in our docker registry
 		url = "https://containers.biocontainers.pro/v2/biocontainers/"+crt_tool+"/tags/list"
 		r2 = requests.get(url)
 		if r2.status_code !=200:
-			print ("Not found in biocontainers", file=output)
+			print ("\tNot found in biocontainers, copy and push everything", file=output)
+			#Means we have to copy all images
+			#images = client.images.pull("quay.io/biocontainers/"+crt_tool)
 		else:
-			print ("Already exists in biocontainers registry", file=output)
-			print (r2.text)
-		#print (r2.headers)
+			print ("\tAlready exists in biocontainers registry:", file=output)
+			cont_tags = r2.json()['tags']
+			print (cont_tags)
+			#print (r2.headers)
+			#Means we must only push the images whose tags differ
+			diff_of_images = list(set(crt_tags) - set(cont_tags))
+			if len(diff_of_images) < 1:
+				print ("\tNothing to do here")
+			else:
+				print ("\tOnly copy and push the difference:")
+				print (diff_of_images)
 
 		##For testing:
-		if testCtr > 100:
+		if testCtr > 5:
 			sys.exit()
 
 print ("Total size required to store images: "+str(totalSize), file = output)
