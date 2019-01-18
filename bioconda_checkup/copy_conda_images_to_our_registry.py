@@ -21,6 +21,41 @@ def get_tags_from_response (response):
 		res.append(tag['name'])
 	return res
 
+def pull_retag_and_push_images (client, tool_name, tags):
+	images = list()
+
+	##1) Pulling images
+	for crt_tag in tags:
+		try:
+			img_repo = "quay.io/biocontainers/"+tool_name
+			print ("Pulling "+img_repo+":"+crt_tag)
+			crt_image = client.images.pull(img_repo, tag = crt_tag)
+			images.append(crt_image)
+		except docker.errors.APIError:
+			print ("\tCould not pull image "+tool_name+":"+crt_tag)
+			continue
+			#return False
+
+		##2) Changing tags
+		try:
+			if crt_image.tag (repository = "containers.biocontainers.pro/bioconda/"+tool_name,
+				tag = crt_tag):
+				print ("\tImage retagged")
+			else:
+				print ("\tImage NOT retagged")
+		except docker.errors.APIError:
+			print ("\tCould not retag image "+tool_name+":"+crt_tag)
+		print (crt_image.tags) ###<- I've interrupted the script and seen that the new tag was indeed created but this doesn't return it...
+
+		##3) Pushing images to new registry
+		#TODO
+
+	##4) Removing all images, another loop since removing each tag may waste time when different versions share layers
+	for crt_image in images:
+		print ("Removing image")
+		client.images.remove(crt_image.id, force=True)
+	return True
+
 ###################################################
 ####################Main method####################
 ###################################################
@@ -71,7 +106,7 @@ with open(args.listoftools, 'r') as listfile:
 		if r2.status_code !=200:
 			print ("\tNot found in biocontainers, copy and push everything", file=output)
 			#Means we have to copy all images
-			#images = client.images.pull("quay.io/biocontainers/"+crt_tool)
+			pull_retag_and_push_images (client, crt_tool, crt_tags)
 		else:
 			print ("\tAlready exists in biocontainers registry:", file=output)
 			cont_tags = r2.json()['tags']
@@ -84,6 +119,8 @@ with open(args.listoftools, 'r') as listfile:
 			else:
 				print ("\tOnly copy and push the difference:")
 				print (diff_of_images)
+				pull_retag_and_push_images (client, crt_tool, diff_of_images)
+
 
 		##For testing:
 		if testCtr > 5:
