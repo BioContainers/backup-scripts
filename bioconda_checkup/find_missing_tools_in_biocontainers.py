@@ -16,19 +16,6 @@ import re
 ####################Importing BioContainers tools list####################
 ##########################################################################
 
-#There are a couple of things to remove from the version number so it can be compared with what's stored$
-#Examples : XXX1-1-deb XXXlgpl-5-deb XXX9-9-deb-py2 XXXdfsg-1-deb
-def clean_version_number (original_version):
-        #myRegex = "(dfsg|lgpl).*$"
-        myRegex = "((ds[\d]*|dfsg[\d]*|lgpl)?(-[^-]+)*-deb.*$)|(-SNAPSHOT$)"
-        #Testing regex:
-        #matchRes = re.search(myRegex, original_version)
-        #if matchRes is not None:
-        #       print (matchRes.group())
-        original_version = re.sub(myRegex, '', original_version)
-
-        return original_version
-
 def import_comparison_list (url):
 	print ("Importing BioContainers tools list from "+url)
 	biocont_tools = defaultdict(list)
@@ -42,9 +29,6 @@ def import_comparison_list (url):
 			parts = crt['path'].split("/")
 			tool=parts[0]
 			version=parts[1]
-			##Cleaning version number of superfluous parts (ie: -deb*, dfsg*, lgpl*)
-			version=clean_version_number(version)
-			#print (version)
 			biocont_tools[tool].append(version)
 	return biocont_tools
 
