@@ -64,7 +64,7 @@ def pull_retag_and_push_images (client, tool_name, tags):
 			logging.info ("Removing image")
 			client.images.remove(crt_image.id, force=True)
 		except docker.errors.ImageNotFound:
-			logging.error ("Could not remove image "crt_image.name+":"+crt_image.tag" hopefully it's already deleted but it may have to be deleted manually otherwise!")
+			logging.error ("Could not remove image "crt_image.name+":"+crt_image.tag+" hopefully it's already deleted but it may have to be deleted manually otherwise!")
 	return True
 
 #def update_tool_tags_list (url, list_of_tags, output):
