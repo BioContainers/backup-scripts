@@ -21,9 +21,9 @@ def get_tags_from_response (response):
 		res.append(tag['name'])
 	return res
 
-def pull_retag_and_push_images (client, tool_name, tags):
+def pull_retag_and_push_images (client, tool_name, tags, output):
 	if tags==None:
-		print ("Nothing to do here")
+		print ("Nothing to do here", file=output)
 		return False
 	images = list()
 
@@ -31,11 +31,11 @@ def pull_retag_and_push_images (client, tool_name, tags):
 	for crt_tag in tags:
 		try:
 			img_repo = "quay.io/biocontainers/"+tool_name
-			print ("Pulling "+img_repo+":"+crt_tag)
+			print ("Pulling "+img_repo+":"+crt_tag, file=output)
 			crt_image = client.images.pull(img_repo, tag = crt_tag)
 			images.append(crt_image)
 		except docker.errors.APIError:
-			print ("\tCould not pull image "+tool_name+":"+crt_tag)
+			print ("\tCould not pull image "+tool_name+":"+crt_tag, file=output)
 			continue
 			#return False
 
@@ -44,44 +44,45 @@ def pull_retag_and_push_images (client, tool_name, tags):
 		try:
 			if crt_image.tag (repository = newRepo,
 				tag = crt_tag):
-				print ("\tImage retagged")
+				print ("\tImage retagged", file=output)
 			else:
-				print ("\tImage NOT retagged")
+				print ("\tImage NOT retagged", file=output)
 		except docker.errors.APIError:
-			print ("\tCould not retag image "+tool_name+":"+crt_tag)
-		print (crt_image.tags) ###<- I've interrupted the script and seen that the new tag was indeed created but this doesn't return it...
+			print ("\tCould not retag image "+tool_name+":"+crt_tag, file=output)
+		print (crt_image.tags, file=output) ###<- I've interrupted the script and seen that the new tag was indeed created but this doesn't return it...
 
 		##3) Pushing images to new registry
 		try:
 			for line in client.images.push(newRepo, tag=crt_tag, stream=True, decode=True):
-				print (line)
+				print (line) ##Not printing to log as it displays too many lines
+			print ("\tImage pushed", file=output)
 		except docker.errors.APIError:
-			print ("\tCould not push image "+new_repo+":"+crt_tag)
+			print ("\tCould not push image "+new_repo+":"+crt_tag, file=output)
 
 	##4) Removing all images, another loop since removing each tag may waste time when different versions share layers
 	for crt_image in images:
-		print ("Removing image")
+		print ("Removing image", file=output)
 		client.images.remove(crt_image.id, force=True)
 	return True
 
-def update_tool_tags_list (url, list_of_tags):
+def update_tool_tags_list (url, list_of_tags, output):
 	if list_of_tags == None:
 		return None
-	print ("\tTags in "+url)
+	print ("\tTags in "+url, file=output)
 
 	##Making sure it doesn't exist in a docker registry
 	try:
 		 r2 = requests.get(url)
 	except requests.exceptions.RequestException:
-		print ("Error while checking tags availability")
+		print ("Error while checking tags availability", file=output)
 		return list_of_tags
 
 	if r2.status_code !=200:
-		print (None)
+		print (None, file=output)
 		return list_of_tags
 	else:
 		cont_tags = r2.json()['tags']
-		print (cont_tags)
+		print (cont_tags, file=output)
 		diff_of_images = list(set(list_of_tags) - set(cont_tags))
 		if len(diff_of_images) < 1:
 			return None
@@ -115,7 +116,7 @@ with open(args.listoftools, 'r') as listfile:
 		crt_line = crt_line.rstrip().split("\t")
 		crt_tool = crt_line[0]
 		crt_version = crt_line[1]
-		print ("TREATING TOOL:"+crt_tool, file = output)
+		print ("TREATING TOOL:"+crt_tool+" (number "+str(testCtr)+")", file = output)
 
 		##Getting/checking bioconda's image availability
 		params = {'onlyActiveTags': 'true', 'limit': '100'}
@@ -129,21 +130,21 @@ with open(args.listoftools, 'r') as listfile:
 			totalSize += tag['size']
 			#print ("Current size: "+str(totalSize))
 		crt_tags = get_tags_from_response(r)
-		print (crt_tags)
+		print (crt_tags, file=output)
 		images = None
 
 		##Checking that tool isn't already in biocontainers
 		url = "https://containers.biocontainers.pro/v2/biocontainers/"+crt_tool+"/tags/list"
-		crt_tags = update_tool_tags_list(url, crt_tags)
+		crt_tags = update_tool_tags_list(url, crt_tags, output)
 
 		##Checking that tool isn't already imported in biocontainers 'bioconda' subrepo
 		url2 = "https://containers.biocontainers.pro/v2/bioconda/"+crt_tool+"/tags/list"
-		crt_tags = update_tool_tags_list(url2, crt_tags)
+		crt_tags = update_tool_tags_list(url2, crt_tags, output)
 
-		print ("After checking redundancy, here is the list of tags that need to be imported:")
-		print (crt_tags)
+		print ("After checking redundancy, here is the list of tags that need to be imported:", file=output)
+		print (crt_tags, file=output)
 
-		pull_retag_and_push_images (client, crt_tool, crt_tags)
+		pull_retag_and_push_images (client, crt_tool, crt_tags, output)
 		##For testing:
 		if testCtr > 5:
 			sys.exit()
