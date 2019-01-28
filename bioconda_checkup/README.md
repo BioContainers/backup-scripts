@@ -15,4 +15,4 @@
 
 ## Part II: pull'n'push
 
-nohup python3 copy[...].py -i [input].txt -l out.log
+nohup python3 copy[...].py -i [input].txt -l out.log &
