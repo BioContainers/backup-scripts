@@ -159,7 +159,7 @@ with open(args.inputlist, 'r') as listfile:
 		pull_retag_and_push_images (client, crt_tool, crt_tags)
 
 		##For testing:
-		if testCtr > 50:
-			sys.exit()
+		#if testCtr > 50:
+		#	sys.exit()
 
 
