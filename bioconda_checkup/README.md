@@ -4,12 +4,17 @@
 
 * Python3    
 
-* Python packages:   
- * requests
- * docker
- * beautifulsoup4
- * wget
- * packaging
+* Python packages:    
+
+  * requests    
+
+  * docker     
+
+  * beautifulsoup4      
+
+  * wget      
+
+  * packaging       
 
 # Steps
 
@@ -38,11 +43,11 @@ Otherwise it is treated this way:
 * image is pulled from quay.io     
 
 * image is retagged appropriately to be pushed on our registry     
-
- * the prefix is __docker-registry.local:30750/bioconda/__     
-
- * the registry is configured so images can only be pushed locally which is why this address is used and why no login/identification is required    
-
+     
+  * the prefix is __docker-registry.local:30750/bioconda/__     
+     
+  * the registry is configured so images can only be pushed locally which is why this address is used and why no login/identification is required    
+    
 * image is pushed using this new tag into our registry    
 
 * image is removed    
