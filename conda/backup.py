@@ -36,8 +36,8 @@ except Exception as e:
 
 regtags = []
 try:
-    #reg = requests.get('http://localhost:30750/v2/biocontainers/' + data['package']['name'] + '/tags/list')
-    reg = requests.get('http://localhost:30750/v2/bioconda/' + data['package']['name'] + '/tags/list')
+    reg = requests.get('http://localhost:30750/v2/biocontainers/' + data['package']['name'] + '/tags/list')
+    #reg = requests.get('http://localhost:30750/v2/bioconda/' + data['package']['name'] + '/tags/list')
     if reg.status_code == 200:
       regjson = reg.json()
       regtags = regjson['tags']
@@ -72,7 +72,7 @@ for key, t in tags.iteritems():
 if tag:
     logging.info('bioconda container: ' + data['package']['name'] + ',tag: ' + tag['name'])
 
-    if not os.environ.get('FORCE', None) and tag['name'] in regtags:
+    if os.environ.get('FORCETAG', None) is None and tag['name'] in regtags:
         logging.info('tag already present, skipping')
         #continue
         os.exit(0)
@@ -82,17 +82,17 @@ if tag:
         logging.info('pull quay.io/biocontainers/' + data['package']['name'] + ':' + tag['name'])
         docker_client.images.pull('quay.io/biocontainers/' + data['package']['name'], tag=tag['name'])
         logging.info('tag image to docker-registry.local:30750') 
-        #cli.tag('quay.io/biocontainers/' + data['package']['name'] + ':' + tag['name'], 'docker-registry.local:30750/biocontainers/' + data['package']['name'], tag=tag['name'])
-        cli.tag('quay.io/biocontainers/' + data['package']['name'] + ':' + tag['name'], 'docker-registry.local:30750/bioconda/' + data['package']['name'], tag=tag['name'])
+        cli.tag('quay.io/biocontainers/' + data['package']['name'] + ':' + tag['name'], 'docker-registry.local:30750/biocontainers/' + data['package']['name'], tag=tag['name'])
+        #cli.tag('quay.io/biocontainers/' + data['package']['name'] + ':' + tag['name'], 'docker-registry.local:30750/bioconda/' + data['package']['name'], tag=tag['name'])
         pull_ok = True
     except Exception as e:
         logging.error('Failed to pull/tag container %s:%s, %s' % (data['package']['name'], tag['name'], str(e)))
     try:
         if pull_ok:
-            #logging.info('push image docker-registry.local:30750/biocontainers/' + data['package']['name'] + ':' + tag['name'])        
-            #for line in docker_client.images.push('docker-registry.local:30750/biocontainers/' + data['package']['name'], tag=tag['name'], stream=True):
-            logging.info('push image docker-registry.local:30750/bioconda/' + data['package']['name'] + ':' + tag['name'])        
-            for line in docker_client.images.push('docker-registry.local:30750/bioconda/' + data['package']['name'], tag=tag['name'], stream=True):
+            logging.info('push image docker-registry.local:30750/biocontainers/' + data['package']['name'] + ':' + tag['name'])        
+            for line in docker_client.images.push('docker-registry.local:30750/biocontainers/' + data['package']['name'], tag=tag['name'], stream=True):
+            #logging.info('push image docker-registry.local:30750/bioconda/' + data['package']['name'] + ':' + tag['name'])        
+            #for line in docker_client.images.push('docker-registry.local:30750/bioconda/' + data['package']['name'], tag=tag['name'], stream=True):
                 logging.debug(str(line))
             logging.info('push ok')
             logging.info('add anchore scan')
@@ -105,8 +105,8 @@ if tag:
     try: 
         logging.debug('cleanup of images') 
         docker_client.images.remove('quay.io/biocontainers/' + data['package']['name'] + ':' + tag['name'])
-        #docker_client.images.remove('docker-registry.local:30750/biocontainers/' + data['package']['name'] + ':' + tag['name'])
-        docker_client.images.remove('docker-registry.local:30750/bioconda/' + data['package']['name'] + ':' + tag['name'])
+        docker_client.images.remove('docker-registry.local:30750/biocontainers/' + data['package']['name'] + ':' + tag['name'])
+        #docker_client.images.remove('docker-registry.local:30750/bioconda/' + data['package']['name'] + ':' + tag['name'])
     except Exception:
         logging.warn('failed to delete images for %s:%s' % (data['package']['name'], tag['name']))
 
