@@ -8,6 +8,7 @@ import docker
 import sys
 import os
 import subprocess
+from email.utils import parsedate_tz
 
 if len(sys.argv) != 2:
     logging.error('must specify yaml file as input')
@@ -56,12 +57,25 @@ rdata = r.json()
 tags = rdata['tags']
 
 cli = docker.APIClient(base_url='unix://var/run/docker.sock')
-for key, tag in tags.iteritems():
+last_update = None
+tag = None
+for key, t in tags.iteritems():
+    last = t['last_modified']
+    last_modified = parsedate_tz(last)
+    if last_update is None:
+        last_update = last_modified
+        tag = t
+    elif last_modified > last_update:
+        last_update = last_modified
+        tag = t
+#for key, tag in tags.iteritems():
+if tag:
     logging.info('bioconda container: ' + data['package']['name'] + ',tag: ' + tag['name'])
 
     if not os.environ.get('FORCE', None) and tag['name'] in regtags:
         logging.info('tag already present, skipping')
-        continue
+        #continue
+        os.exit(0)
 
     pull_ok = False
     try:
@@ -95,3 +109,4 @@ for key, tag in tags.iteritems():
         docker_client.images.remove('docker-registry.local:30750/bioconda/' + data['package']['name'] + ':' + tag['name'])
     except Exception:
         logging.warn('failed to delete images for %s:%s' % (data['package']['name'], tag['name']))
+
